@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 import os
 from dotenv import load_dotenv
+from seasonal import compute_seasonal_baseline, compute_inventory_surprise
 
 load_dotenv()
 
@@ -57,9 +58,15 @@ def fetch_all():
     df_merged = df_merged.set_index("date").ffill()
     df_merged["inventory_change"] = df_merged["stocks"].diff()
     df_merged["implied_balance"] = (df_merged["production"] + df_merged["imports"] - df_merged["exports"] - df_merged["refinery_runs"])
+    df_merged["balance_error"] = df_merged["inventory_change"] - df_merged["implied_balance"]
 
     return df_merged
 
 if __name__ == "__main__":
     df = fetch_all()
     print(df.tail())
+
+    seasonal = compute_seasonal_baseline(df)
+    df = compute_inventory_surprise(df, seasonal)
+    print("\n=========================")
+    print(df.tail().reset_index("date"))
