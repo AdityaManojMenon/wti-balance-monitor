@@ -1,6 +1,8 @@
 # WTI Balance Monitor
+---
 
 A fundamentals-driven crude oil forecasting engine that ingests weekly EIA petroleum data, computes U.S. crude balance dynamics, normalizes inventory changes against seasonal patterns, and generates pre-release inventory forecasts.
+
 ---
 
 ## What It Does
