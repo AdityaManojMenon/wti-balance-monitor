@@ -1,0 +1,4 @@
+forecast_date,forecast_generated_at,seasonal_base,runs_dev,imports_dev,exports_dev,runs_adjustment,imports_adjustment,exports_adjustment,forecast_inventory_change,forecast_signal
+2026-03-27 00:00:00,2026-04-07 16:13:21.823706,1664.33,-411.92,1995.67,-2408.0,230.17,1093.8,733.77,3722.07,Bearish
+2026-03-27 00:00:00,2026-04-08 00:10:20.324354,1664.33,-411.92,1995.67,-2408.0,230.17,1093.8,733.77,3722.07,Bearish
+2026-03-27 00:00:00,2026-04-08 08:44:38.707869,1664.33,-411.92,1995.67,-2408.0,230.17,1093.8,733.77,3722.07,Bearish

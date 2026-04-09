@@ -23,21 +23,20 @@ def generate_forecast(df):
     exports_52w_avg = df["exports"].rolling(52, min_periods=12).mean().iloc[-1]
 
     # Deviations from "normal"
-    runs_dev = latest["refinery_runs"] - runs_52w_avg if pd.notna(runs_52w_avg) else 0
-    imports_dev = latest["imports"] - imports_52w_avg if pd.notna(imports_52w_avg) else 0
-    exports_dev = latest["exports"] - exports_52w_avg if pd.notna(exports_52w_avg) else 0
+    runs_dev = (latest["refinery_runs"] * 7) - (runs_52w_avg * 7) if pd.notna(runs_52w_avg) else 0
+    imports_dev = (latest["imports"] * 7) - (imports_52w_avg * 7) if pd.notna(imports_52w_avg) else 0
+    exports_dev = (latest["exports"] * 7) - (exports_52w_avg * 7) if pd.notna(exports_52w_avg) else 0
 
     # Forecast logic
-    # Higher refinery runs -> more crude demand -> more bullish / lower inventories
-    # Higher imports -> more supply -> more bearish / higher inventories
-    # Higher exports -> less domestic crude availability -> more bullish / lower inventories
+    # got weights from ingestion
     seasonal_base = latest["seasonal_avg"]
 
-    runs_adjustment = -0.30 * runs_dev
-    imports_adjustment = 0.25 * imports_dev
-    exports_adjustment = -0.20 * exports_dev
+    runs_adjustment = -0.55877571 * runs_dev
+    imports_adjustment = 0.54808454 * imports_dev
+    exports_adjustment = -0.30471984 * exports_dev
 
-    forecast_inventory_change = (seasonal_base + runs_adjustment + imports_adjustment + exports_adjustment)
+    predicted_surprise = runs_adjustment + imports_adjustment + exports_adjustment
+    forecast_inventory_change = latest["seasonal_avg"] + predicted_surprise
 
     signal = "Bullish" if forecast_inventory_change < 0 else "Bearish"
 
@@ -54,3 +53,19 @@ def generate_forecast(df):
         "forecast_inventory_change": round(float(forecast_inventory_change), 2),
         "forecast_signal": signal,
     }
+
+def attach_forecast_context(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add rolling context columns that help interpret the forecast.
+    """
+    out = df.copy()
+
+    out["runs_52w_avg"] = out["refinery_runs"].rolling(52, min_periods=12).mean()
+    out["imports_52w_avg"] = out["imports"].rolling(52, min_periods=12).mean()
+    out["exports_52w_avg"] = out["exports"].rolling(52, min_periods=12).mean()
+
+    out["runs_dev"] = out["refinery_runs"] - out["runs_52w_avg"]
+    out["imports_dev"] = out["imports"] - out["imports_52w_avg"]
+    out["exports_dev"] = out["exports"] - out["exports_52w_avg"]
+
+    return out

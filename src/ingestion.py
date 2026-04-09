@@ -2,7 +2,9 @@ import requests
 import pandas as pd
 import os
 from dotenv import load_dotenv
-from seasonal import compute_seasonal_baseline, compute_inventory_surprise
+from sklearn.linear_model import LinearRegression
+from src.seasonal import compute_seasonal_baseline, compute_inventory_surprise
+from src.forecast import attach_forecast_context
 
 load_dotenv()
 
@@ -68,5 +70,26 @@ if __name__ == "__main__":
 
     seasonal = compute_seasonal_baseline(df)
     df = compute_inventory_surprise(df, seasonal)
+    df = attach_forecast_context(df)
+
     print("\n=========================")
     print(df.tail().reset_index("date"))
+
+    df["runs_weekly"] = df["refinery_runs"] * 7
+    df["imports_weekly"] = df["imports"] * 7
+    df["exports_weekly"] = df["exports"] * 7
+
+    df["runs_dev"] = df["runs_weekly"] - df["runs_weekly"].rolling(52).mean()
+    df["imports_dev"] = df["imports_weekly"] - df["imports_weekly"].rolling(52).mean()
+    df["exports_dev"] = df["exports_weekly"] - df["exports_weekly"].rolling(52).mean()
+
+    train_df = df.iloc[:-1]
+
+    features = train_df[["runs_dev", "imports_dev", "exports_dev"]].dropna()
+    target = train_df["inventory_change"].loc[features.index]
+
+    model = LinearRegression()
+    model.fit(features, target)
+
+    print("Coefficients:", model.coef_)
+    print("Intercept:", model.intercept_)
